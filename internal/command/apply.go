@@ -71,8 +71,18 @@ func (c *ApplyCommand) Run(rawArgs []string) int {
 		return 1
 	}
 
+	if planFile == nil {
+		diags = diags.Append(tfdiags.Sourceless(
+			tfdiags.Error,
+			"Plan file is required when running apply",
+			"Plan file must be provided for the apply command. You can create a plan file by running:\n  opentf plan -out=plan.tfplan",
+		))
+		view.Diagnostics(diags)
+		return 1
+	}
+
 	// Check for invalid combination of plan file and variable overrides
-	if planFile != nil && !args.Vars.Empty() {
+	if !args.Vars.Empty() {
 		diags = diags.Append(tfdiags.Sourceless(
 			tfdiags.Error,
 			"Can't set variables when applying a saved plan",
