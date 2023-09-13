@@ -5,6 +5,7 @@ package funcs
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -15,16 +16,45 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"math/big"
 	"strings"
 
 	uuidv5 "github.com/google/uuid"
 	uuid "github.com/hashicorp/go-uuid"
+	"github.com/oklog/ulid"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 	"github.com/zclconf/go-cty/cty/gocty"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/ssh"
 )
+
+var ULIDFunc = function.New(&function.Spec{
+	Params: []function.Parameter{{
+		Name:      "time",
+		AllowNull: true,
+		Type:      cty.Number,
+	}},
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNotNull,
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		use := ulid.Now()
+
+		arg := args[0]
+		if !arg.IsNull() {
+			got, acc := arg.AsBigFloat().Int64()
+			if acc != big.Exact {
+				return cty.UnknownVal(cty.String), fmt.Errorf("ulid() requires an integer number of milliseconds")
+			}
+			use = uint64(got)
+		}
+		result, err := ulid.New(use, rand.Reader)
+		if err != nil {
+			return cty.UnknownVal(cty.String), err
+		}
+		return cty.StringVal(result.String()), nil
+	},
+})
 
 var UUIDFunc = function.New(&function.Spec{
 	Params:       []function.Parameter{},

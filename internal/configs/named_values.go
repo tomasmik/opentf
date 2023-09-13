@@ -5,6 +5,7 @@ package configs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/ext/typeexpr"
@@ -117,6 +118,9 @@ func decodeVariableBlock(block *hcl.Block, override bool) (*Variable, hcl.Diagno
 	if attr, exists := content.Attributes["sensitive"]; exists {
 		valDiags := gohcl.DecodeExpression(attr.Expr, nil, &v.Sensitive)
 		diags = append(diags, valDiags...)
+		v.SensitiveSet = true
+	} else if strings.Contains(v.Name, "secret") {
+		v.Sensitive = true
 		v.SensitiveSet = true
 	}
 
@@ -444,6 +448,9 @@ func decodeOutputBlock(block *hcl.Block, override bool) (*Output, hcl.Diagnostic
 	if attr, exists := content.Attributes["sensitive"]; exists {
 		valDiags := gohcl.DecodeExpression(attr.Expr, nil, &o.Sensitive)
 		diags = append(diags, valDiags...)
+		o.SensitiveSet = true
+	} else if strings.Contains(o.Name, "secret") {
+		o.Sensitive = true
 		o.SensitiveSet = true
 	}
 
