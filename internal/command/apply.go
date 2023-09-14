@@ -11,6 +11,7 @@ import (
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/command/arguments"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/command/views"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/plans/planfile"
+	"github.com/placeholderplaceholderplaceholder/opentf/internal/replay"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/tfdiags"
 )
 
@@ -49,6 +50,17 @@ func (c *ApplyCommand) Run(rawArgs []string) int {
 	// Instantiate the view, even if there are flag errors, so that we render
 	// diagnostics according to the desired view
 	view := views.NewApply(args.ViewType, c.Destroy, c.View)
+
+	if args.SaveOutput && args.ViewType == arguments.ViewHuman {
+		rp, err := replay.NewCopier()
+		if err != nil {
+			diags = diags.Append(err)
+			view.Diagnostics(diags)
+			return 1
+		}
+
+		c.View.CopyView(rp)
+	}
 
 	if diags.HasErrors() {
 		view.Diagnostics(diags)

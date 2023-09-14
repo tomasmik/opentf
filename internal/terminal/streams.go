@@ -19,7 +19,9 @@ package terminal
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strings"
 )
 
 // Streams represents a collection of three streams that each may or may not
@@ -39,6 +41,8 @@ type Streams struct {
 	Stdout *OutputStream
 	Stderr *OutputStream
 	Stdin  *InputStream
+
+	copier []io.Writer
 }
 
 // Init tries to initialize a terminal, if Terraform is running in one, and
@@ -77,32 +81,48 @@ func Init() (*Streams, error) {
 	}, nil
 }
 
+func (s *Streams) AddCopier(h io.Writer) {
+	s.copier = append(s.copier, h)
+}
+
 // Print is a helper for conveniently calling fmt.Fprint on the Stdout stream.
 func (s *Streams) Print(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(s.Stdout.File, a...)
+	return s.write(fmt.Sprint(a...))
 }
 
 // Printf is a helper for conveniently calling fmt.Fprintf on the Stdout stream.
 func (s *Streams) Printf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(s.Stdout.File, format, a...)
+	return s.write(fmt.Sprintf(format, a...))
 }
 
 // Println is a helper for conveniently calling fmt.Fprintln on the Stdout stream.
 func (s *Streams) Println(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(s.Stdout.File, a...)
+	return s.write(fmt.Sprintln(a...))
 }
 
 // Eprint is a helper for conveniently calling fmt.Fprint on the Stderr stream.
 func (s *Streams) Eprint(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(s.Stderr.File, a...)
+	return s.write(fmt.Sprint(a...))
 }
 
 // Eprintf is a helper for conveniently calling fmt.Fprintf on the Stderr stream.
 func (s *Streams) Eprintf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(s.Stderr.File, format, a...)
+	return s.write(fmt.Sprintf(format, a...))
 }
 
 // Eprintln is a helper for conveniently calling fmt.Fprintln on the Stderr stream.
 func (s *Streams) Eprintln(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(s.Stderr.File, a...)
+	return s.write(fmt.Sprintln(a...))
+}
+
+func (s *Streams) write(v string) (n int, err error) {
+	reader := strings.NewReader(v)
+
+	writers := []io.Writer{s.Stdout.File}
+	writers = append(writers, s.copier...)
+
+	writer := io.MultiWriter(writers...)
+
+	le, err := io.Copy(writer, reader)
+	return int(le), err
 }

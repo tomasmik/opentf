@@ -4,6 +4,8 @@
 package views
 
 import (
+	"io"
+
 	"github.com/mitchellh/colorstring"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/command/arguments"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/command/format"
@@ -46,6 +48,11 @@ func NewView(streams *terminal.Streams) *View {
 		},
 		configSources: func() map[string][]byte { return nil },
 	}
+}
+
+func (v *View) CopyView(into io.Writer) *View {
+	v.streams.AddCopier(into)
+	return v
 }
 
 // SetRunningInAutomation modifies the view's "running in automation" flag,
