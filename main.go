@@ -26,7 +26,6 @@ import (
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/didyoumean"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/httpclient"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/logging"
-	"github.com/placeholderplaceholderplaceholder/opentf/internal/replay"
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/terminal"
 	"github.com/placeholderplaceholderplaceholder/opentf/version"
 	"go.opentelemetry.io/otel/trace"
@@ -112,13 +111,6 @@ func realMain() int {
 	if ExperimentsAllowed() {
 		log.Printf("[INFO] This build of OpenTF allows using experimental features")
 	}
-
-	cp, err := replay.NewCopier()
-	if err != nil {
-		Ui.Error(fmt.Sprintf("Failed to configure the replay: %s", err))
-		return 1
-	}
-	defer cp.Close()
 
 	streams, err := terminal.Init()
 	if err != nil {

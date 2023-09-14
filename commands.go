@@ -119,6 +119,12 @@ func initCommands(
 	// that to match.
 
 	Commands = map[string]cli.CommandFactory{
+		"replay": func() (cli.Command, error) {
+			return &command.ReplayCommand{
+				Meta: meta,
+			}, nil
+		},
+
 		"apply": func() (cli.Command, error) {
 			return &command.ApplyCommand{
 				Meta: meta,

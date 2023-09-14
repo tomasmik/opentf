@@ -7,7 +7,7 @@ import (
 	"github.com/placeholderplaceholderplaceholder/opentf/internal/builtin/provisioners/file"
 )
 
-const replayFile = "replay.log"
+const applyFile = "replay.log"
 
 type StreamCopier struct {
 	file *os.File
@@ -19,7 +19,7 @@ func NewCopier() (*StreamCopier, error) {
 		return nil, err
 	}
 
-	fp := filepath.Join(wd, ".terraform", replayFile)
+	fp := filepath.Join(wd, ".terraform", applyFile)
 	file, err := os.Create(fp)
 	if err != nil {
 		return nil, err
